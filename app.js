@@ -71,6 +71,42 @@ else
 
 })
 
+
+
+
+app.post("/updateProfile", async (req, res) => {
+    const { name, email, currentPassword, newPassword } = req.body;
+    console.log(req.body);
+
+    try {
+      const user = await User.findOne({ email: email });
+  
+      if (!user) {
+        return res.status(400).json({ message: 'User not found' });
+      }
+  
+      const isMatch = await bcrypt.compare(currentPassword, user.password);
+  
+      if (!isMatch) {
+        return res.status(400).json({ message: 'Current password is incorrect' });
+      }
+  
+      if (newPassword) {
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(newPassword, salt);
+      }
+  
+      user.name = name || user.name;
+  
+      await user.save();
+  
+      res.status(200).json({ message: 'Profile updated successfully' });
+      console.log('Profile updated successfully');
+    } catch (error) {
+      res.status(500).json({ message: 'Server error', error });
+    }
+  });
+
 app.listen(5001,()=>{
     console.log("Nodejs server started..")
 })
